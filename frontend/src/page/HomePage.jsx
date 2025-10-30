@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
-import HeroSection from '../components/home/HeroSection';
-import RecentSets from '../components/home/RecentSets';
-import PopularSets from '../components/home/PopularSets';
-import CTASection from '../components/home/CTASection';
+import HeroSection from '../features/home/components/HeroSection';
+import RecentSets from '../features/home/components/RecentSets';
+import PopularSets from '../features/home/components/PopularSets';
+import CTASection from '../features/home/components/CTASection';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
