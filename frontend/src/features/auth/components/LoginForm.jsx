@@ -4,6 +4,8 @@ import LoginSuccessAlert from "./LoginSuccessAlert";
 import SocialLoginButtons from "./SocialLoginButtons";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { loginUser } from "../api/authApi";
+import { useNavigate } from "react-router-dom";
+  
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,7 +17,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-
+const navigate = useNavigate();
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -39,36 +41,34 @@ export default function LoginForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // 1. Validate form (giữ nguyên)
+  const handleSubmit = async(e) => {
+     e.preventDefault();
+
     if (!validateForm()) return;
 
-    // 2. Bật loading và xóa lỗi cũ
     setIsLoading(true);
-   try {
+    setErrors({});
+
+    try {
       const res = await loginUser(formData.email, formData.password);
 
-      // 🟥 Nếu login thành công
       console.log("✅ Login thành công:", res);
-      setLoginSuccess(true);
-      localStorage.setItem("token", res.Token); // lưu token
+      localStorage.setItem("token", res.Token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      setLoginSuccess(true);
 
-      // 🕒 Sau 1.5s sẽ chuyển trang (ví dụ về trang chủ)
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1500);
+      // ✅ Dùng navigate thay vì window.location.href
+      setTimeout(() => navigate("/"), 1500);
     } catch (error) {
       console.error("❌ Lỗi đăng nhập:", error);
-      setErrors({ general: error.message || "Sai email hoặc mật khẩu" });
+      setErrors({
+        general: error.message || "Sai email hoặc mật khẩu",
+      });
+      setLoginSuccess(false); // ✅ fix bug hiển thị thành công dù lỗi
     } finally {
       setIsLoading(false);
-      setLoginSuccess(true);
-      console.log("Login data:", formData);
-    }, 1200);
+    }
   };
-  
 
   // BƯỚC 4: GIAO DIỆN (thay <button> bằng <Link> cho điều hướng)
   return (
@@ -155,9 +155,12 @@ export default function LoginForm() {
           </label>
           
           {/* Sửa: Dùng Link thay cho button */}
-          <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <span
+            onClick={() => navigate("/forgot-password")}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
+          >
             Quên mật khẩu?
-          </Link>
+          </span>
         </div>
 
         {/* Nút Submit (Giữ nguyên) */}
@@ -182,9 +185,12 @@ export default function LoginForm() {
       <p className="mt-8 text-center text-gray-600">
         Chưa có tài khoản?{" "}
         {/* Sửa: Dùng Link thay cho button */}
-        <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+        <span
+          onClick={() => navigate("/register")}
+          className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
+        >
           Đăng ký ngay
-        </Link>
+        </span>
       </p>
     </div>
   );

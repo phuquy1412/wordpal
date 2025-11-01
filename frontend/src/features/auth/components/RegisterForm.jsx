@@ -18,6 +18,7 @@ export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+
   const navigate = useNavigate();
 
  const getPasswordStrengthColor = () => {
@@ -82,7 +83,7 @@ export default function RegisterForm() {
        const res = await registerUser(payload);
       console.log("✅ Đăng ký thành công:", res);
       setTimeout(() => {
-        navigate('/login'); // <-- Thay '/login' bằng path đến trang đăng nhập của bạn
+        navigate('/login'); 
       }, 2000);
       setRegisterSuccess(true);
     } catch (err) {
@@ -157,6 +158,7 @@ export default function RegisterForm() {
                           id="password"
                           name="password"
                           value={formData.password}
+                          minLength={8}
                           onChange={handleChange}
                           placeholder="Tối thiểu 8 ký tự"
                           className={`w-full pl-12 pr-12 py-3 rounded-xl border-2 transition focus:outline-none ${

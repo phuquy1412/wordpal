@@ -12,6 +12,8 @@ export default function LoginPage() {
         {/* Right Side */}
         <LoginForm />
       </div>
+      
     </div>
+   
   );
 }
