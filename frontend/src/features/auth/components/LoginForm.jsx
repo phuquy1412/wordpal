@@ -3,6 +3,10 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import LoginSuccessAlert from "./LoginSuccessAlert";
 import SocialLoginButtons from "./SocialLoginButtons";
 import LoadingSpinner from "../common/LoadingSpinner";
+import authService from "../services/authService.js";
+import { useNavigate, Link } from "react-router-dom";
+
+
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +18,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-
+  const navigate= useNavigate();
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -22,6 +26,8 @@ export default function LoginForm() {
       [name]: type === "checkbox" ? checked : value,
     }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Thêm dòng này để xóa lỗi API khi người dùng gõ lại
+    if (errors.general) setErrors((prev) => ({ ...prev, general: "" }));
   };
 
   const validateForm = () => {
@@ -36,23 +42,49 @@ export default function LoginForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  // BƯỚC 3: CẬP NHẬT HÀM SUBMIT ĐỂ GỌI API
+  const handleSubmit = async (e) => { // Chuyển thành hàm async
     e.preventDefault();
+    // 1. Validate form (giữ nguyên)
     if (!validateForm()) return;
 
+    // 2. Bật loading và xóa lỗi cũ
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setLoginSuccess(true);
-      console.log("Login data:", formData);
-    }, 1200);
-  };
+    setErrors({}); // Xóa hết lỗi
+    setLoginSuccess(false);
 
+    try {
+      // 3. GỌI API LOGIN TỪ SERVICE (thay cho setTimeout)
+      await authService.login(formData.email, formData.password);
+
+      // 4. XỬ LÝ KHI LOGIN THÀNH CÔNG
+      setIsLoading(false);
+      setLoginSuccess(true); // Hiển thị thông báo thành công
+
+      // 5. Chờ 1.5s rồi chuyển hướng về trang chủ
+      setTimeout(() => {
+        navigate("/"); // Điều hướng về trang chủ
+        // Cân nhắc dùng: window.location.reload(); 
+        // nếu bạn muốn trang tải lại hoàn toàn để cập nhật Header
+      }, 1500); // 1.5 giây
+
+    } catch (err) {
+      // 6. XỬ LÝ KHI LOGIN THẤT BẠI
+      setIsLoading(false);
+      // Gán lỗi trả về từ API (mà service đã throw) vào 'errors.general'
+      setErrors({ general: err.message || "Email hoặc mật khẩu không chính xác." });
+    }
+  };
+  
+
+  // BƯỚC 4: GIAO DIỆN (thay <button> bằng <Link> cho điều hướng)
   return (
     <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
       <h2 className="text-3xl font-bold text-gray-900 mb-6">Đăng nhập</h2>
 
       {loginSuccess && <LoginSuccessAlert />}
+
+      {/* Phần này sẽ tự động hiển thị lỗi API từ 'errors.general' */}
       {errors.general && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-3">
           <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
@@ -61,7 +93,7 @@ export default function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Email */}
+        {/* Email (Giữ nguyên) */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
           <div className="relative">
@@ -85,7 +117,7 @@ export default function LoginForm() {
           )}
         </div>
 
-        {/* Password */}
+        {/* Password (Giữ nguyên) */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label>
           <div className="relative">
@@ -128,11 +160,14 @@ export default function LoginForm() {
             />
             <span className="text-sm text-gray-600">Ghi nhớ đăng nhập</span>
           </label>
-          <button type="button" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+          
+          {/* Sửa: Dùng Link thay cho button */}
+          <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
             Quên mật khẩu?
-          </button>
+          </Link>
         </div>
 
+        {/* Nút Submit (Giữ nguyên) */}
         <button
           type="submit"
           disabled={isLoading}
@@ -142,6 +177,7 @@ export default function LoginForm() {
         </button>
       </form>
 
+      {/* (Giữ nguyên) */}
       <div className="my-6 flex items-center">
         <div className="flex-1 border-t border-gray-300"></div>
         <span className="px-4 text-sm text-gray-500">hoặc</span>
@@ -152,7 +188,10 @@ export default function LoginForm() {
 
       <p className="mt-8 text-center text-gray-600">
         Chưa có tài khoản?{" "}
-        <button className="text-blue-600 hover:text-blue-700 font-semibold">Đăng ký ngay</button>
+        {/* Sửa: Dùng Link thay cho button */}
+        <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+          Đăng ký ngay
+        </Link>
       </p>
     </div>
   );
