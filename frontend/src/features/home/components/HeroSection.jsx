@@ -17,11 +17,11 @@ export default function HeroSection({ searchQuery, onSearchChange }) {
           Học tập thông minh hơn,
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-            không vất vả hơn
+            dễ dàng tạo chủ đề
           </span>
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-          Hàng triệu học sinh và giáo viên tin tưởng sử dụng StudyHub để tạo flashcards, ôn tập và đạt mục tiêu học tập
+          Hàng triệu học sinh và giáo viên tin tưởng sử dụng WordPal để tạo flashcards, ôn tập và đạt mục tiêu học tập
         </p>
 
         <SearchBar value={searchQuery} onChange={onSearchChange} />
