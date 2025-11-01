@@ -15,6 +15,6 @@ router.post('/forgot-password', forgotPassword);
 
 // API để đặt lại mật khẩu (khi user click link)
 // :token là một tham số động, chứa token từ email
-router.patch('/reset-password/:token', resetPassword)
+router.patch('/reset-password/:token', resetPassword);
 
 export default router;
