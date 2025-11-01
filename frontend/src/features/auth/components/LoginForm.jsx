@@ -3,6 +3,7 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import LoginSuccessAlert from "./LoginSuccessAlert";
 import SocialLoginButtons from "./SocialLoginButtons";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { loginUser } from "../api/authApi";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,16 +37,30 @@ export default function LoginForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+   try {
+      const res = await loginUser(formData.email, formData.password);
+
+      // 🟥 Nếu login thành công
+      console.log("✅ Login thành công:", res);
       setLoginSuccess(true);
-      console.log("Login data:", formData);
-    }, 1200);
+      localStorage.setItem("token", res.Token); // lưu token
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // 🕒 Sau 1.5s sẽ chuyển trang (ví dụ về trang chủ)
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
+    } catch (error) {
+      console.error("❌ Lỗi đăng nhập:", error);
+      setErrors({ general: error.message || "Sai email hoặc mật khẩu" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
