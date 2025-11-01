@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, User } from "lucide-react";
 import SocialRegisterButtons from "./SocialRegisterButtons";
+import { registerUser } from "../api/authApi";
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,7 @@ export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const navigate = useNavigate();
 
  const getPasswordStrengthColor = () => {
     if (passwordStrength === 0) return 'bg-gray-300';
@@ -64,15 +67,30 @@ export default function RegisterForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Gửi data thật sang backend
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        passwordConfirm: formData.confirmPassword,
+        displayName: formData.fullName,
+      };
+       const res = await registerUser(payload);
+      console.log("✅ Đăng ký thành công:", res);
+      setTimeout(() => {
+        navigate('/login'); // <-- Thay '/login' bằng path đến trang đăng nhập của bạn
+      }, 2000);
       setRegisterSuccess(true);
-      console.log("Register data:", formData);
-    }, 1000);
+    } catch (err) {
+      console.error("❌ Lỗi khi đăng ký:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Có lỗi xảy ra khi đăng ký");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   
