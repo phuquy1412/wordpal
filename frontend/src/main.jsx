@@ -25,9 +25,9 @@ root.render(
         {}
         <Route path="/sss" element={<Profile />} />
         {}
-        <Route path="/quenmk" element={<ForgotPasswordPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {}
-        <Route path="/resetmk" element={<ResetPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       </Routes>
     </Router>
   </React.StrictMode>

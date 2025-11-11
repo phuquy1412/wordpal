@@ -125,7 +125,7 @@ export const forgotPassword = async (req, res) => {
         // Tạo URL mà user sẽ click
         // (Quan trọng: 'localhost:3000' là địa chỉ React App (Frontend) của bạn)
         // Token gốc (resetToken) sẽ nằm trên URL
-        const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+        const resetURL = `http://localhost:5173/reset-password/${resetToken}`;
 
         // Nội dung email
         const message = `Bạn vừa yêu cầu reset mật khẩu. Vui lòng nhấn vào link sau để đặt lại mật khẩu của bạn (link chỉ có hiệu lực 10 phút): ${resetURL}`;

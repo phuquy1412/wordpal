@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Mail, ArrowLeft, Loader2 } from 'lucide-react';
+import { forgotPassword } from '../api/authApi';
 
 const ForgotPasswordForm = () => {
   const [email, setEmail] = useState('');
@@ -27,9 +28,10 @@ const ForgotPasswordForm = () => {
 
     setIsLoading(true);
 
-    try {
-      // Call API: await authService.forgotPassword(email);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+     try {
+      // 🟡 Gọi API thật từ backend
+      const res = await forgotPassword(email);
+      console.log("📨 Server response:", res);
       setIsSuccess(true);
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại');

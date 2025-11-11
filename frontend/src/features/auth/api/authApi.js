@@ -16,3 +16,23 @@ export const loginUser = async (email, password) => {
     throw error.response?.data || { message: "Lỗi không xác định" };
   }
 };
+export const forgotPassword = async (email) => {
+  try {
+    const res = await axios.post(`${API_URL}/forgot-password`, { email });
+    return res.data; // server trả về message thông báo đã gửi email
+  } catch (error) {
+    console.error("❌ Lỗi khi gửi yêu cầu quên mật khẩu:", error);
+    throw error.response?.data || { message: "Lỗi không xác định khi gửi email reset" };
+  }
+};
+// 🟢 Đặt lại mật khẩu (khi người dùng bấm link trong email)
+export const resetPassword = async (token, password, passwordConfirm) => {
+  try {
+    // Gửi cả password và passwordConfirm
+    const res = await axios.patch(`${API_URL}/reset-password/${token}`, { password, passwordConfirm });
+    return res.data;
+  } catch (error) {
+    console.error("❌ Lỗi đặt lại mật khẩu:", error);
+    throw error.response?.data || { message: "Lỗi không xác định" };
+  }
+};

@@ -1,8 +1,11 @@
 // src/features/auth/components/ResetPasswordForm.jsx
 import { useState } from 'react';
 import { Lock, Eye, EyeOff, CheckCircle, Shield } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom'; // 🟢 Thêm dòng này
+import { resetPassword } from '../api/authApi';
 
 const ResetPasswordForm = () => {
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -10,6 +13,8 @@ const ResetPasswordForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const { token } = useParams(); // Lấy token (ĐÚNG)
+  const navigate = useNavigate();
 
   const passwordRequirements = [
     { id: 1, text: 'Ít nhất 8 ký tự', check: password.length >= 8 },
@@ -43,16 +48,17 @@ const ResetPasswordForm = () => {
     setIsLoading(true);
 
     try {
-      // Call API: await authService.resetPassword(token, password);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 🟢 Gọi API thật
+      const res = await resetPassword(token, password, confirmPassword);
+      console.log("✅ Reset password response:", res);
       setIsSuccess(true);
-      
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 3000);
-    } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra');
+
+      // 🕒 Tự động quay về trang login
+       setTimeout(() => {
+        navigate('/login'); 
+      }, 2000);
+    }catch (err) {
+      setError(err.message || 'Có lỗi xảy ra khi đặt lại mật khẩu');
     } finally {
       setIsLoading(false);
     }
