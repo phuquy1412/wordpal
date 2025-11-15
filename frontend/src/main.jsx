@@ -8,6 +8,12 @@ import RegisterPage from './page/RegisterPage';
 import Profile from "./Profile";
 import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import ResetPasswordPage from "./page/ResetPasswordPage";
+import FlashCardPage from "./page/FlashCardPage";
+import MyDecksPage from "./page/MyDecksPage";
+import TestFlashCardItemPage from "./page/TestFlashCardItemPage";
+import CreateFlashcardPage from "./page/CreateFlashcardPage";
+import DictionaryPage from './page/DictionaryPage';
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // 3. Render ứng dụng
@@ -28,6 +34,16 @@ root.render(
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {}
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        {}
+        <Route path="/study/:deckId" element={<FlashCardPage />} />
+        {}
+        <Route path="/decks" element={<MyDecksPage />} />
+        {}
+        <Route path="/test" element={<TestFlashCardItemPage />} />
+        {}
+        <Route path="/create-deck" element={<CreateFlashcardPage />} />
+        {}
+        <Route path="/dictionary" element={<DictionaryPage />} />
       </Routes>
     </Router>
   </React.StrictMode>
