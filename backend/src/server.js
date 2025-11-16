@@ -1,6 +1,7 @@
 import express from 'express';
 import usersRouter from './routers/usersRouters.js';
 import authRouter from './routers/authRouters.js';
+import wordRouter from './routers/wordRouters.js'
 import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.use("/api/user",usersRouter);
 app.use("/api/auth",authRouter);
+app.use('/api/words', wordRouter);
 
 connectDB().then(() =>{
     app.listen(PORT,() =>{
