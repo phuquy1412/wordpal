@@ -433,23 +433,7 @@ export default function UserProfilePage() {
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Địa điểm
-                      </label>
-                      <input
-                        type="text"
-                        name="location"
-                        value={tempUserInfo.location}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none ${
-                          isEditing 
-                            ? 'border-gray-200 focus:border-blue-500' 
-                            : 'border-gray-100 bg-gray-50 text-gray-600'
-                        }`}
-                      />
-                    </div>
+                   
                   </div>
 
                   <div>

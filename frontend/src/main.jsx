@@ -13,7 +13,8 @@ import MyDecksPage from "./page/MyDecksPage";
 import TestFlashCardItemPage from "./page/TestFlashCardItemPage";
 import CreateFlashcardPage from "./page/CreateFlashcardPage";
 import DictionaryPage from './page/DictionaryPage';
-
+import StudyReminderPage from './page/StudyReminderPage';
+import TopicDetailPage from './page/TopicDetailPage'; // Import the new page
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // 3. Render ứng dụng
@@ -22,7 +23,7 @@ root.render(
    
     <Router>
       <Routes>
-        <Route path="/signup" element={<RegisterPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         {}
         <Route path="/" element={<QuizletHomePage />} />
         
@@ -39,11 +40,17 @@ root.render(
         {}
         <Route path="/decks" element={<MyDecksPage />} />
         {}
+        <Route path="/topics/:topicId" element={<TopicDetailPage />} />
+        {}
         <Route path="/test" element={<TestFlashCardItemPage />} />
         {}
         <Route path="/create-deck" element={<CreateFlashcardPage />} />
         {}
         <Route path="/dictionary" element={<DictionaryPage />} />
+        {}
+        <Route path="/studyreminder" element={<StudyReminderPage/>}/>
+        {}
+        <Route path="/profile" element={<Profile/>}/>
       </Routes>
     </Router>
   </React.StrictMode>

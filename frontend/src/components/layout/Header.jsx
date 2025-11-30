@@ -70,6 +70,9 @@ export default function Header() {
             <a href="/dictionary" className="text-gray-700 hover:text-blue-600 font-medium transition">
               Tra từ
             </a>
+            <a href="/decks" className="text-gray-700 hover:text-blue-600 font-medium transition">
+              Chủ đề
+            </a>
             <a href="/library" className="text-gray-700 hover:text-blue-600 font-medium transition">
               Thư viện
             </a>

@@ -1,5 +1,6 @@
 // src/pages/MyDecksPage.jsx
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Grid, List } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
@@ -7,6 +8,7 @@ import DeckList from '../features/decks/components/DeckList';
 import CreateDeckModal from '../features/decks/components/CreateDeckModal';
 
 const MyDecksPage = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,7 +52,7 @@ const MyDecksPage = () => {
   };
 
   const handleSelectDeck = (deck) => {
-    window.location.href = `/study/${deck.id}`;
+    navigate(`/topics/${deck.id}`);
   };
 
   return (
