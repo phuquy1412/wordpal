@@ -1,4 +1,4 @@
-
+import mongoose from "mongoose";
 
 const flashcardSchema = new mongoose.Schema({
     topic: {

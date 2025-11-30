@@ -1,156 +1,193 @@
 import Topic from '../../model/Topic.js';
+import Flashcard from '../../model/Flashcard.js';
+import UserProgress from '../../model/UserProgress.js';
+import mongoose from 'mongoose';
 
-// @desc    Lấy tất cả chủ đề
-// @route   GET /api/topics
-// @access  Public
-export const getAllTopics = async (req, res) => {
-   try {
-    const topics = await Topic.find().populate('creator', 'displayName');
-    res.status(200).json(topics);
-   } catch (error) {
-    console.error("Lỗi khi gọi getAllTopics", error);
-    res.status(500).json({message:"Lỗi máy chủ khi lấy danh sách chủ đề"}); 
-   }
-};
-
-// @desc    Lấy một chủ đề bằng ID
-// @route   GET /api/topics/:id
-// @access  Public
-export const getTopicById = async (req, res) => {
-    try {
-        const topic = await Topic.findById(req.params.id).populate('creator', 'displayName');
-
-        if (!topic) {
-            return res.status(404).json({ message: "Không tìm thấy chủ đề với ID đã cho." });
-        }
-
-        res.status(200).json(topic);
-    } catch (error) {
-        console.error("Lỗi khi gọi getTopicById", error);
-        res.status(500).json({ message: "Lỗi máy chủ khi lấy thông tin chủ đề." });
-    }
-};
-
-
-// @desc    Tạo chủ đề mới
-// @route   POST /api/topics
-// @access  Private (yêu cầu người dùng đăng nhập)
+/**
+ * @desc    Tạo một topic mới
+ * @route   POST /api/topics
+ * @access  Private
+ */
 export const createTopic = async (req, res) => {
+    const { name, description, isPublic, category, difficulty, tags } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ message: 'Tên chủ đề không được để trống' });
+    }
+
     try {
-        const { name, description, isPublic, category, difficulty, thumbnail, tags } = req.body;
-        
-        // TODO: Thay thế ID này bằng ID của người dùng đã đăng nhập (req.user.id)
-        // ID này chỉ dùng để tạm thời, cần có middleware xác thực để lấy ID thật
-        const creator = "66a8553641c888960b73b530"; 
-
-        if (!name) {
-             return res.status(400).json({ message: "Tên chủ đề là bắt buộc." });
-        }
-
-        const newTopic = await Topic.create({
+        const topic = new Topic({
             name,
             description,
-            creator,
-            isPublic,
+            isPublic: isPublic || false,
+            creator: req.user._id, // Lấy từ middleware 'protect'
             category,
             difficulty,
-            thumbnail,
             tags
-        }); 
-
-        res.status(201).json({
-            status: 'success',
-            data: {
-                topic: newTopic 
-            }
         });
 
+        const createdTopic = await topic.save();
+        res.status(201).json(createdTopic);
     } catch (error) {
-        console.error("Lỗi khi gọi createTopic:", error);
-        res.status(500).json({message: "Lỗi máy chủ khi tạo chủ đề."});
+        console.error(`Lỗi khi tạo topic: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi tạo topic.' });
     }
 };
 
-// @desc    Cập nhật chủ đề
-// @route   PUT /api/topics/:id
-// @access  Private (chỉ người tạo mới có quyền)
+/**
+ * @desc    Lấy tất cả các topic do người dùng hiện tại tạo
+ * @route   GET /api/topics/my-topics
+ * @access  Private
+ */
+export const getMyTopics = async (req, res) => {
+    try {
+        const topics = await Topic.find({ creator: req.user._id }).sort({ createdAt: -1 });
+        res.json(topics);
+    } catch (error) {
+        console.error(`Lỗi khi lấy topic của tôi: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi lấy danh sách topic.' });
+    }
+};
+
+/**
+ * @desc    Lấy tất cả các topic public
+ * @route   GET /api/topics/public
+ * @access  Public
+ */
+export const getPublicTopics = async (req, res) => {
+    try {
+        // Có thể thêm phân trang ở đây sau
+        const topics = await Topic.find({ isPublic: true })
+            .sort({ totalLearners: -1, createdAt: -1 })
+            .populate('creator', 'name avatar'); // Lấy thông tin cơ bản của người tạo
+
+        res.json(topics);
+    } catch (error) {
+        console.error(`Lỗi khi lấy topic công khai: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi lấy danh sách topic công khai.' });
+    }
+};
+
+
+/**
+ * @desc    Lấy thông tin chi tiết của một topic bằng ID
+ * @route   GET /api/topics/:id
+ * @access  Public (nếu topic isPublic) / Private (nếu là của người tạo)
+ */
+export const getTopicById = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'ID topic không hợp lệ' });
+        }
+
+        const topic = await Topic.findById(req.params.id);
+
+        if (!topic) {
+            return res.status(404).json({ message: 'Không tìm thấy topic' });
+        }
+
+        // Nếu topic không public, chỉ người tạo mới có quyền xem
+        if (!topic.isPublic && (!req.user || topic.creator.toString() !== req.user._id.toString())) {
+             return res.status(403).json({ message: 'Bạn không có quyền truy cập topic này' });
+        }
+
+        res.json(topic);
+    } catch (error) {
+        console.error(`Lỗi khi lấy chi tiết topic: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi lấy chi tiết topic.' });
+    }
+};
+
+/**
+ * @desc    Cập nhật thông tin topic
+ * @route   PUT /api/topics/:id
+ * @access  Private
+ */
 export const updateTopic = async (req, res) => {
+    const { name, description, isPublic, category, difficulty, tags } = req.body;
+    
     try {
-        const topicId = req.params.id;
-        const topic = await Topic.findById(topicId);
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'ID topic không hợp lệ' });
+        }
+
+        const topic = await Topic.findById(req.params.id);
 
         if (!topic) {
-            return res.status(404).json({ message: "Không tìm thấy chủ đề." });
+            return res.status(404).json({ message: 'Không tìm thấy topic' });
         }
 
-        // TODO: Thêm logic kiểm tra quyền: if (topic.creator.toString() !== req.user.id) ...
-        
-        const allowedUpdates = {
-            name: req.body.name,
-            description: req.body.description,
-            isPublic: req.body.isPublic,
-            category: req.body.category,
-            difficulty: req.body.difficulty,
-            thumbnail: req.body.thumbnail,
-            tags: req.body.tags
-        };
-
-        const updateData = {};
-        Object.keys(allowedUpdates).forEach(key => {
-            if (req.body[key] !== undefined) {
-                updateData[key] = allowedUpdates[key];
-            }
-        });
-        
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({ message: "Không có dữ liệu hợp lệ để cập nhật." });
+        // Chỉ người tạo mới có quyền sửa
+        if (topic.creator.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa topic này' });
         }
 
-        const updatedTopic = await Topic.findByIdAndUpdate(
-            topicId,
-            updateData, 
-            {
-                new: true,
-                runValidators: true 
-            }
-        );
+        topic.name = name || topic.name;
+        topic.description = description || topic.description;
+        topic.isPublic = isPublic !== undefined ? isPublic : topic.isPublic;
+        topic.category = category || topic.category;
+        topic.difficulty = difficulty || topic.difficulty;
+        topic.tags = tags || topic.tags;
 
-        res.status(200).json({
-            status: "success",
-            data: {
-                topic: updatedTopic
-            }
-        });
-        
+        const updatedTopic = await topic.save();
+        res.json(updatedTopic);
     } catch (error) {
-        console.error("Lỗi khi gọi updateTopic:", error);
-        res.status(500).json({ message: "Lỗi máy chủ khi cập nhật chủ đề." });
+        console.error(`Lỗi khi cập nhật topic: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi cập nhật topic.' });
     }
 };
 
-// @desc    Xóa chủ đề
-// @route   DELETE /api/topics/:id
-// @access  Private (chỉ người tạo mới có quyền)
-export const deleteTopic = async (req,res) => {
+/**
+ * @desc    Xóa một topic
+ * @route   DELETE /api/topics/:id
+ * @access  Private
+ */
+export const deleteTopic = async (req, res) => {
     try {
-        const topicId = req.params.id;
-        const topic = await Topic.findById(topicId);
-
-        if (!topic) {
-            return res.status(404).json({ message: "Không tìm thấy chủ đề." });
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'ID topic không hợp lệ' });
         }
 
-        // TODO: Thêm logic kiểm tra quyền: if (topic.creator.toString() !== req.user.id) ...
+        const topic = await Topic.findById(req.params.id);
 
-        await Topic.findByIdAndDelete(topicId);
+        if (!topic) {
+            return res.status(404).json({ message: 'Không tìm thấy topic' });
+        }
+
+        // Chỉ người tạo mới có quyền xóa
+        if (topic.creator.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Bạn không có quyền xóa topic này' });
+        }
         
-        res.status(204).json({
-            status: "success",
-            data: null
-        });
+        // Bắt đầu một transaction để đảm bảo tính toàn vẹn
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // Xóa tất cả flashcards thuộc topic này
+            await Flashcard.deleteMany({ topic: topic._id }, { session });
+
+            // Xóa tất cả progress liên quan đến topic này
+            await UserProgress.deleteMany({ topic: topic._id }, { session });
+
+            // Xóa topic
+            await Topic.deleteOne({ _id: topic._id }, { session });
+
+            // Commit transaction
+            await session.commitTransaction();
+            
+            res.json({ message: 'Topic và tất cả dữ liệu liên quan đã được xóa thành công' });
+
+        } catch (error) {
+            // Nếu có lỗi, rollback tất cả thay đổi
+            await session.abortTransaction();
+            throw error; // Ném lỗi ra ngoài để block catch bên ngoài xử lý
+        } finally {
+            session.endSession();
+        }
 
     } catch (error) {
-        console.error("Lỗi khi gọi deleteTopic:", error);
-        res.status(500).json({message:"Lỗi máy chủ khi xóa chủ đề."});
+        console.error(`Lỗi khi xóa topic: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi xóa topic.' });
     }
 };

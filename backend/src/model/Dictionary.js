@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 const dictionarySchema = new mongoose.Schema({
     word: {
         type: String,

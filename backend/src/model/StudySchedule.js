@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 const studyScheduleSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
