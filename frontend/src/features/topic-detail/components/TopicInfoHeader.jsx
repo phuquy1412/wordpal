@@ -2,6 +2,19 @@
 import React from 'react';
 import { BookOpen, User, Tag, Clock, Star } from 'lucide-react';
 
+const formatDateTime = (dateString) => {
+  if (!dateString) return "Không rõ";
+  const date = new Date(dateString);
+
+  return date.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+};
+
 const TopicInfoHeader = ({ topic, onStudyClick }) => {
   if (!topic) {
     return null; // Or a loading skeleton
@@ -11,7 +24,7 @@ const TopicInfoHeader = ({ topic, onStudyClick }) => {
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-8 mb-8 shadow-lg">
       <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold mb-2">{topic?.title || "Chủ đề không có tên"}</h1>
+          <h1 className="text-4xl font-bold mb-2">{topic?.name || "Chủ đề không có tên"}</h1>
           <p className="text-blue-100 max-w-3xl">{topic.description}</p>
         </div>
         <div className="mt-6 md:mt-0 flex-shrink-0">
@@ -35,7 +48,7 @@ const TopicInfoHeader = ({ topic, onStudyClick }) => {
         </div>
         <div className="flex items-center space-x-2">
           <Clock className="w-5 h-5" />
-          <span>{topic.createdAt}</span>
+          <span>{formatDateTime(topic.createdAt)}</span>
         </div>
         {topic.isFavorite && (
           <div className="flex items-center space-x-2">
