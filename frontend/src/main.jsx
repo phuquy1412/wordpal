@@ -9,7 +9,7 @@ import Profile from "./Profile";
 import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import ResetPasswordPage from "./page/ResetPasswordPage";
 import FlashCardPage from "./page/FlashCardPage";
-import MyDecksPage from "./page/MyDecksPage";
+import MyTopicPage from "./page/MyTopicPage";
 import TestFlashCardItemPage from "./page/TestFlashCardItemPage";
 import CreateFlashcardPage from "./page/CreateFlashcardPage";
 import DictionaryPage from './page/DictionaryPage';
@@ -36,9 +36,9 @@ root.render(
         {}
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         {}
-        <Route path="/study/:deckId" element={<FlashCardPage />} />
+        <Route path="/study/:topicId" element={<FlashCardPage />} />
         {}
-        <Route path="/decks" element={<MyDecksPage />} />
+        <Route path="/decks" element={<MyTopicPage />} />
         {}
         <Route path="/topics/:topicId" element={<TopicDetailPage />} />
         {}

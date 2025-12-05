@@ -3,15 +3,6 @@ import React from 'react';
 import { Volume2, Star, Edit, Trash2, Plus } from 'lucide-react';
 
 const FlashcardList = ({ flashcards, onAddCardClick }) => {
-  if (!flashcards || flashcards.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Chủ đề này chưa có thẻ nào</h3>
-        <p className="text-gray-600">Hãy thêm thẻ để bắt đầu học.</p>
-      </div>
-    );
-  }
-
   const playAudio = (audioUrl) => {
     if (audioUrl) {
       const audio = new Audio(audioUrl);
@@ -24,6 +15,22 @@ const FlashcardList = ({ flashcards, onAddCardClick }) => {
     medium: 'bg-yellow-100 text-yellow-800',
     hard: 'bg-red-100 text-red-800',
   };
+
+  if (!flashcards || flashcards.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Chủ đề này chưa có thẻ nào</h3>
+        <p className="text-gray-600 mb-6">Hãy thêm thẻ để bắt đầu học.</p>
+        <button
+          onClick={onAddCardClick}
+          className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-md mx-auto"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Thêm thẻ mới</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100">

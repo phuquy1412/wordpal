@@ -1,14 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Shuffle, CheckCircle, XCircle, RotateCw } from 'lucide-react';
+import { getFlashcardsByTopicApi } from '../../topic-detail/api/topicDetailApi';
 
-const StudyFlashcardsPage = () => {
-  const [cards, setCards] = useState([
-    { id: 1, term: 'Hello', definition: 'Xin chào, lời chào hỏi', example: 'Hello, how are you?', isFavorite: false },
-    { id: 2, term: 'Goodbye', definition: 'Tạm biệt, lời chia tay', example: 'Goodbye, see you later!', isFavorite: true },
-    { id: 3, term: 'Thank you', definition: 'Cảm ơn, lời cảm tạ', example: 'Thank you for your help.', isFavorite: false },
-    { id: 4, term: 'Please', definition: 'Làm ơn, xin vui lòng', example: 'Please help me.', isFavorite: false },
-    { id: 5, term: 'Sorry', definition: 'Xin lỗi, lời xin lỗi', example: 'Sorry, I am late.', isFavorite: false },
-  ]);
+const StudyFlashcardsPage = ({ topicId }) => {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -17,7 +14,30 @@ const StudyFlashcardsPage = () => {
   const [showResults, setShowResults] = useState(false);
 
   const currentCard = cards[currentIndex];
-  const progress = ((currentIndex + 1) / cards.length) * 100;
+  const progress = cards.length > 0 ? ((currentIndex + 1) / cards.length) * 100 : 0;
+
+  useEffect(() => {
+    const fetchFlashcards = async () => {
+      if (!topicId) {
+        setError('Topic ID is missing.');
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getFlashcardsByTopicApi(topicId);
+        setCards(data.flashcards);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching flashcards:", err);
+        setError('Failed to load flashcards. Please try again.');
+        setLoading(false);
+      }
+    };
+
+    fetchFlashcards();
+  }, [topicId]);
 
   const handleNext = () => {
     if (currentIndex < cards.length - 1) {
@@ -40,32 +60,30 @@ const StudyFlashcardsPage = () => {
   };
 
   const handleMastered = () => {
-    if (!masteredCards.includes(currentCard.id)) {
-      setMasteredCards([...masteredCards, currentCard.id]);
+    if (currentCard && !masteredCards.includes(currentCard._id)) {
+      setMasteredCards([...masteredCards, currentCard._id]);
     }
     handleNext();
   };
 
   const handleDifficult = () => {
-    if (!difficultCards.includes(currentCard.id)) {
-      setDifficultCards([...difficultCards, currentCard.id]);
+    if (currentCard && !difficultCards.includes(currentCard._id)) {
+      setDifficultCards([...difficultCards, currentCard._id]);
     }
     handleNext();
   };
 
   const handleShuffle = () => {
-   setCards(prevCards => {
-    // Tạo một bản sao và xáo trộn nó
-    const shuffled = [...prevCards].sort(() => Math.random() - 0.5);
-    return shuffled;
-  });
+    setCards(prevCards => {
+      const shuffled = [...prevCards].sort(() => Math.random() - 0.5);
+      return shuffled;
+    });
 
-  // Reset lại toàn bộ trạng thái học, vì đây là một vòng mới
-  setCurrentIndex(0);
-  setIsFlipped(false);
-  setMasteredCards([]);
-  setDifficultCards([]);
-  setShowResults(false);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setMasteredCards([]);
+    setDifficultCards([]);
+    setShowResults(false);
   };
 
   const handleRestart = () => {
@@ -75,6 +93,39 @@ const StudyFlashcardsPage = () => {
     setDifficultCards([]);
     setShowResults(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <p className="text-xl font-semibold">Loading flashcards...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <p className="text-xl font-semibold text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (cards.length === 0 && !loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-2xl font-bold mb-4">Chưa có flashcard nào trong chủ đề này.</p>
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center space-x-2 text-blue-600 hover:underline mx-auto"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Quay lại</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (showResults) {
     return (
@@ -134,6 +185,11 @@ const StudyFlashcardsPage = () => {
     );
   }
 
+  // Ensure currentCard is defined before accessing its properties
+  if (!currentCard) {
+    return null; // Or a loading spinner/message, though it should be caught by cards.length === 0
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -187,15 +243,15 @@ const StudyFlashcardsPage = () => {
               <div className={`absolute w-full h-full backface-hidden ${isFlipped ? 'invisible' : 'visible'}`}>
                 <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl p-8 flex flex-col">
                   <span className="text-xs font-semibold text-white/80 bg-white/20 px-3 py-1 rounded-full self-start">
-                    TERM
+                    MẶT TRƯỚC
                   </span>
                   <div className="flex-1 flex items-center justify-center">
                     <h2 className="text-5xl font-bold text-white text-center">
-                      {currentCard.term}
+                      {currentCard.front}
                     </h2>
                   </div>
                   <p className="text-center text-white/80 text-sm">
-                    Click để xem định nghĩa
+                    Click để xem mặt sau
                   </p>
                 </div>
               </div>
@@ -204,11 +260,11 @@ const StudyFlashcardsPage = () => {
               <div className={`absolute w-full h-full backface-hidden rotate-y-180 ${isFlipped ? 'visible' : 'invisible'}`}>
                 <div className="w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col border-2 border-purple-200">
                   <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full self-start">
-                    DEFINITION
+                    MẶT SAU
                   </span>
                   <div className="flex-1 flex flex-col justify-center">
                     <p className="text-2xl text-gray-800 mb-6 text-center">
-                      {currentCard.definition}
+                      {currentCard.back}
                     </p>
                     {currentCard.example && (
                       <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
@@ -260,9 +316,9 @@ const StudyFlashcardsPage = () => {
           </button>
 
           <div className="flex space-x-2">
-            {cards.map((_, index) => (
+            {cards.map((card, index) => (
               <button
-                key={index}
+                key={card._id} // Use card._id for key
                 onClick={() => {
                   setCurrentIndex(index);
                   setIsFlipped(false);
@@ -270,9 +326,9 @@ const StudyFlashcardsPage = () => {
                 className={`w-2 h-2 rounded-full transition-all ${
                   index === currentIndex
                     ? 'w-8 bg-blue-600'
-                    : masteredCards.includes(cards[index].id)
+                    : masteredCards.includes(card._id)
                     ? 'bg-green-400'
-                    : difficultCards.includes(cards[index].id)
+                    : difficultCards.includes(card._id)
                     ? 'bg-orange-400'
                     : 'bg-gray-300'
                 }`}

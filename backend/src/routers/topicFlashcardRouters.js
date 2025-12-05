@@ -2,8 +2,8 @@ import express from 'express';
 import {
     createFlashcard,
     getFlashcardsByTopic
-} from '../../controllers/flashcard/flashcardControllers.js';
-import { protect } from '../../middlewares/authMiddleware.js';
+} from '../controllers/flashcard/flashcardControllers.js';
+import { protect } from '../middlewares/authMiddleware.js';
 
 // Kích hoạt mergeParams để có thể truy cập params từ router cha (vd: :topicId)
 const router = express.Router({ mergeParams: true });

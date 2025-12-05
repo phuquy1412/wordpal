@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
  * @access  Private
  */
 export const createFlashcard = async (req, res) => {
-    const { topicId } = req.params;
+    const { id: topicId } = req.params;
     const { front, back, pronunciation, example } = req.body;
 
     if (!front || !back) {
@@ -71,12 +71,14 @@ export const createFlashcard = async (req, res) => {
  * @access  Public (nếu topic public) / Private (nếu là của người tạo)
  */
 export const getFlashcardsByTopic = async (req, res) => {
-    const { topicId } = req.params;
+    const { id: topicId } = req.params;
+    console.log("Backend Flashcard Controller: Received request for topicId:", topicId); // DEBUGGING
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20; // Mặc định 20 thẻ mỗi trang
     const skip = (page - 1) * limit;
 
     if (!mongoose.Types.ObjectId.isValid(topicId)) {
+        console.error("Backend Flashcard Controller: Invalid topicId format detected."); // DEBUGGING
         return res.status(400).json({ message: 'ID topic không hợp lệ' });
     }
 

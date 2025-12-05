@@ -75,8 +75,10 @@ export const getPublicTopics = async (req, res) => {
  * @access  Public (nếu topic isPublic) / Private (nếu là của người tạo)
  */
 export const getTopicById = async (req, res) => {
+    console.log("Backend Controller: Received request for topicId:", req.params.id); // DEBUGGING
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            console.error("Backend Controller: Invalid topicId format detected."); // DEBUGGING
             return res.status(400).json({ message: 'ID topic không hợp lệ' });
         }
 

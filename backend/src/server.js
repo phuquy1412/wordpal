@@ -3,7 +3,7 @@ import usersRouter from './routers/usersRouters.js';
 import authRouter from './routers/authRouters.js';
 import wordRouter from './routers/wordRouters.js'
 import topicRouter from './routers/topic/topicRouters.js';
-import flashcardRouter from './routers/flashcardRouters.js';
+import flashcardRouter from './routers/flashcard/flashcardRouters.js';
 import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';

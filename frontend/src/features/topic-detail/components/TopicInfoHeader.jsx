@@ -2,7 +2,7 @@
 import React from 'react';
 import { BookOpen, User, Tag, Clock, Star } from 'lucide-react';
 
-const TopicInfoHeader = ({ topic }) => {
+const TopicInfoHeader = ({ topic, onStudyClick }) => {
   if (!topic) {
     return null; // Or a loading skeleton
   }
@@ -11,11 +11,14 @@ const TopicInfoHeader = ({ topic }) => {
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-8 mb-8 shadow-lg">
       <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold mb-2">{topic.title}</h1>
+          <h1 className="text-4xl font-bold mb-2">{topic?.title || "Chủ đề không có tên"}</h1>
           <p className="text-blue-100 max-w-3xl">{topic.description}</p>
         </div>
         <div className="mt-6 md:mt-0 flex-shrink-0">
-          <button className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-xl shadow-md hover:bg-gray-100 transition-all">
+          <button
+            onClick={onStudyClick}
+            className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-xl shadow-md hover:bg-gray-100 transition-all"
+          >
             Học ngay
           </button>
         </div>
@@ -24,7 +27,7 @@ const TopicInfoHeader = ({ topic }) => {
       <div className="mt-8 pt-6 border-t border-blue-500/50 flex flex-wrap gap-x-8 gap-y-4 text-blue-100">
         <div className="flex items-center space-x-2">
           <User className="w-5 h-5" />
-          <span>Tạo bởi <strong>{topic.author.name}</strong></span>
+          <span>Tạo bởi <strong>{topic?.author?.name || "Không rõ"}</strong></span>
         </div>
         <div className="flex items-center space-x-2">
           <BookOpen className="w-5 h-5" />
