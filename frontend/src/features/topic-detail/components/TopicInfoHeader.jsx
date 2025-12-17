@@ -68,6 +68,9 @@ const TopicInfoHeader = ({ topic, onStudyClick }) => {
         </div>
       )}
     </div>
+
+
+
   );
 };
 
