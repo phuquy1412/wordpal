@@ -53,7 +53,9 @@ const CreateReminderModal = ({ isOpen, onClose, onCreateReminder, decks = [] }) 
   };
 
   const handleDeckChange = (deckId) => {
-    const selectedDeck = decks.find(d => d.id === parseInt(deckId));
+    // Lưu ý: deckId từ select luôn là string, id trong decks có thể là string hoặc number
+    // nên dùng so sánh == hoặc chuyển đổi kiểu dữ liệu
+    const selectedDeck = decks.find(d => d.id == deckId);
     setFormData(prev => ({
       ...prev,
       deckId,
@@ -87,13 +89,39 @@ const CreateReminderModal = ({ isOpen, onClose, onCreateReminder, decks = [] }) 
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    const reminderData = {
-      ...formData,
-      id: Date.now(),
-      createdAt: new Date().toISOString()
+    // Chuẩn bị dữ liệu gửi lên API
+    // Backend yêu cầu: topicId, scheduledDate, scheduledTime, duration, reminderBefore, notes
+    
+    // Xử lý ngày: Vì backend StudySchedule hiện tại đang lưu từng lịch riêng biệt cho mỗi ngày cụ thể
+    // Nhưng UI lại cho chọn "Thứ 2, Thứ 3..." (Recurring pattern).
+    // TẠM THỜI: Để đơn giản hóa cho phiên bản đầu tiên, chúng ta sẽ tạo lịch cho "Lần học tới gần nhất" của thứ trong tuần được chọn
+    // Hoặc nếu người dùng chọn 1 ngày cụ thể thì tốt hơn.
+    
+    // Tuy nhiên, để khớp với backend hiện tại (createSchedule), ta sẽ tạo 1 bản ghi đại diện.
+    // *Lưu ý*: Logic lặp lại (Recurring) nên được xử lý kỹ hơn ở Backend hoặc UI chọn ngày cụ thể (Calendar).
+    // Ở đây mình sẽ giả định người dùng chọn 1 ngày cụ thể (hoặc hôm nay) cho demo, 
+    // hoặc map field 'days' (recurrence) sang notes để backend biết.
+    
+    // UPDATE: Backend có hỗ trợ `daysOfWeek` và `isRecurring` trong Model nhưng Controller `createSchedule`
+    // hiện tại chỉ đang nhận `scheduledDate`.
+    // -> Ta sẽ gửi `scheduledDate` là ngày hôm nay (hoặc ngày mai) kết hợp giờ.
+    
+    const today = new Date();
+    const scheduledDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    const scheduleData = {
+      topicId: formData.deckId,
+      scheduledDate: scheduledDate, 
+      scheduledTime: formData.time,
+      duration: 30, // Mặc định
+      reminderBefore: 15, // Mặc định
+      notes: formData.message,
+      // Các trường bổ sung nếu backend update hỗ trợ recurring sau này
+      isRecurring: formData.days.length > 0,
+      daysOfWeek: formData.days // ['mon', 'tue']...
     };
 
-    onCreateReminder(reminderData);
+    onCreateReminder(scheduleData);
     handleClose();
   };
 
@@ -141,7 +169,7 @@ const CreateReminderModal = ({ isOpen, onClose, onCreateReminder, decks = [] }) 
           {/* Select Deck */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Chọn bộ thẻ cần ôn <span className="text-red-500">*</span>
+              Chọn chủ đề cần ôn <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -152,7 +180,7 @@ const CreateReminderModal = ({ isOpen, onClose, onCreateReminder, decks = [] }) 
                   errors.deckId ? 'border-red-300' : 'border-gray-200'
                 }`}
               >
-                <option value="">-- Chọn bộ thẻ --</option>
+                <option value="">-- Chọn chủ đề --</option>
                 {decks.map((deck) => (
                   <option key={deck.id} value={deck.id}>
                     {deck.title} ({deck.totalCards} thẻ)
@@ -320,7 +348,7 @@ const CreateReminderModal = ({ isOpen, onClose, onCreateReminder, decks = [] }) 
               </p>
               <div className="space-y-2 text-sm text-gray-700">
                 <p>
-                  <span className="font-medium">📚 Bộ thẻ:</span> {formData.deckTitle}
+                  <span className="font-medium">📚 Chủ đề:</span> {formData.deckTitle}
                 </p>
                 <p>
                   <span className="font-medium">⏰ Thời gian:</span> {formData.time}

@@ -28,6 +28,10 @@ const studyScheduleSchema = new mongoose.Schema({
         type: Number, // minutes before
         default: 15
     },
+    isReminderSent: {
+        type: Boolean,
+        default: false
+    },
     isCompleted: {
         type: Boolean,
         default: false
