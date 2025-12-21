@@ -2,7 +2,7 @@
 import React from 'react';
 import { Volume2, Star, Edit, Trash2, Plus } from 'lucide-react';
 
-const FlashcardList = ({ flashcards, onAddCardClick }) => {
+const FlashcardList = ({ flashcards, onAddCardClick, onDeleteCard }) => {
   const playAudio = (audioUrl) => {
     if (audioUrl) {
       const audio = new Audio(audioUrl);
@@ -48,7 +48,7 @@ const FlashcardList = ({ flashcards, onAddCardClick }) => {
       <div className="overflow-x-auto">
         <ul className="divide-y divide-gray-100">
             {flashcards.map((card) => (
-              <li key={card.id} className="p-6 hover:bg-gray-50/50">
+              <li key={card._id} className="p-6 hover:bg-gray-50/50">
                 <div className="grid grid-cols-12 gap-4 items-center">
                   
                   {/* Image */}
@@ -91,7 +91,10 @@ const FlashcardList = ({ flashcards, onAddCardClick }) => {
                       <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
                         <Edit className="w-5 h-5 text-gray-500" />
                       </button>
-                      <button className="p-2 hover:bg-red-100 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => onDeleteCard(card._id)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                      >
                         <Trash2 className="w-5 h-5 text-red-500" />
                       </button>
                     </div>

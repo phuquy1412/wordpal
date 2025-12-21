@@ -5,7 +5,7 @@ import Footer from '../components/layout/Footer';
 import TopicInfoHeader from '../features/topic-detail/components/TopicInfoHeader';
 import FlashcardList from '../features/topic-detail/components/FlashcardList';
 import AddFlashcardModal from '../features/topic-detail/components/AddFlashcardModal';
-import { getTopicDetailsApi, getFlashcardsByTopicApi, createFlashcardApi } from '../features/topic-detail/api/topicDetailApi';
+import { getTopicDetailsApi, getFlashcardsByTopicApi, createFlashcardApi, deleteFlashcardApi } from '../features/topic-detail/api/topicDetailApi';
 
 const TopicDetailPage = () => {
   const { topicId } = useParams();
@@ -44,21 +44,35 @@ const TopicDetailPage = () => {
 
   console.log("Current topic state before render:", topic); // DEBUGGING
 
-  const handleAddCard = async (newCardData) => {
-    try {
-      const createdCard = await createFlashcardApi(topicId, newCardData);
-      setFlashcards([createdCard, ...flashcards]);
-      setShowAddModal(false);
-      console.log('Flashcard created successfully!');
-      // Optionally re-fetch all data to ensure consistency
-      // fetchData(); 
-    } catch (err) {
-      const errorMessage = err.message || 'Failed to create flashcard.';
-      console.error(errorMessage);
-      // Optionally, set an error state to show in the UI
-    }
-  };
-
+    const handleAddCard = async (newCardData) => {
+      try {
+        const createdCard = await createFlashcardApi(topicId, newCardData);
+        setFlashcards([createdCard, ...flashcards]);
+        setShowAddModal(false);
+        console.log('Flashcard created successfully!');
+        // Optionally re-fetch all data to ensure consistency
+        // fetchData();
+      } catch (err) {
+        const errorMessage = err.message || 'Failed to create flashcard.';
+        console.error(errorMessage);
+        // Optionally, set an error state to show in the UI
+      }
+    };
+  
+    const handleDeleteCard = async (cardId) => {
+      if (!window.confirm('Bạn có chắc chắn muốn xóa thẻ này?')) {
+        return;
+      }
+          try {
+                  await deleteFlashcardApi(cardId);
+                  setFlashcards(flashcards.filter(card => card._id !== cardId));
+                  console.log(`Flashcard with ID ${cardId} deleted successfully!`);      } catch (err) {
+        const errorMessage = err.message || 'Failed to delete flashcard.';
+        console.error(errorMessage);
+        // Optionally, set an error state to show in the UI
+        alert(errorMessage);
+      }
+    };
   const handleStudyClick = () => {
     navigate(`/study/${topicId}`); // Navigate to FlashCardPage with topicId
   };
@@ -85,7 +99,11 @@ const TopicDetailPage = () => {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <TopicInfoHeader topic={topic} onStudyClick={handleStudyClick} />
-        <FlashcardList flashcards={flashcards} onAddCardClick={() => setShowAddModal(true)} />
+        <FlashcardList 
+          flashcards={flashcards} 
+          onAddCardClick={() => setShowAddModal(true)} 
+          onDeleteCard={handleDeleteCard}
+        />
       </main>
 
       <Footer />
