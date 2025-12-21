@@ -77,6 +77,14 @@ const TopicDetailPage = () => {
     navigate(`/study/${topicId}`); // Navigate to FlashCardPage with topicId
   };
 
+  const handleAiQuizClick = () => {
+    if (flashcards.length < 4) {
+      alert('Chủ đề cần ít nhất 4 thẻ để tạo bài luyện tập AI.');
+      return;
+    }
+    navigate(`/topics/${topicId}/quiz`); // Navigate to the new AI Quiz page
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -98,7 +106,11 @@ const TopicDetailPage = () => {
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <TopicInfoHeader topic={topic} onStudyClick={handleStudyClick} />
+        <TopicInfoHeader 
+          topic={topic} 
+          onStudyClick={handleStudyClick}
+          onAiQuizClick={handleAiQuizClick} 
+        />
         <FlashcardList 
           flashcards={flashcards} 
           onAddCardClick={() => setShowAddModal(true)} 

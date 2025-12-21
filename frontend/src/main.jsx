@@ -20,6 +20,8 @@ import NotificationsPage from './page/NotificationsPage';
 import { AuthProvider } from './contexts/AuthContext'; // Import AuthProvider
 import ClassesPage from './page/ClassesPage';
 import LibraryPage from './page/LibraryPage';
+import QuizPage from './page/QuizPage';
+import QuizResultPage from './page/QuizResultPage';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -45,6 +47,10 @@ root.render(
           <Route path="/studyreminder" element={<StudyReminderPage/>}/>
           <Route path="/classes" element={<ClassesPage />} />
           <Route path="/library" element={<LibraryPage />} />
+          
+          {/* Các route mới cho tính năng AI Quiz */}
+          <Route path="/topics/:topicId/quiz" element={<QuizPage />} />
+          <Route path="/quiz/result/:resultId" element={<QuizResultPage />} />
         </Routes>
       </Router>
     </AuthProvider>

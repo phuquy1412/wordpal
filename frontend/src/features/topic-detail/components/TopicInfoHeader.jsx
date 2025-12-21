@@ -15,7 +15,7 @@ const formatDateTime = (dateString) => {
   });
 };
 
-const TopicInfoHeader = ({ topic, onStudyClick }) => {
+const TopicInfoHeader = ({ topic, onStudyClick, onAiQuizClick }) => {
   if (!topic) {
     return null; // Or a loading skeleton
   }
@@ -27,7 +27,13 @@ const TopicInfoHeader = ({ topic, onStudyClick }) => {
           <h1 className="text-4xl font-bold mb-2">{topic?.name || "Chủ đề không có tên"}</h1>
           <p className="text-blue-100 max-w-3xl">{topic.description}</p>
         </div>
-        <div className="mt-6 md:mt-0 flex-shrink-0">
+        <div className="mt-6 md:mt-0 flex-shrink-0 flex items-center gap-4">
+          <button
+            onClick={onAiQuizClick}
+            className="bg-purple-500 text-white font-semibold px-8 py-4 rounded-xl shadow-md hover:bg-purple-600 transition-all"
+          >
+            Luyện tập AI
+          </button>
           <button
             onClick={onStudyClick}
             className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-xl shadow-md hover:bg-gray-100 transition-all"
