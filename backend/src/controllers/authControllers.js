@@ -223,4 +223,52 @@ export const resetPassword = async (req, res) => {
         console.error("LỖI RESET MẬT KHẨU:", error);
         res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau.' });
     }
-};  
+};
+
+/**
+ * CHỨC NĂNG 3: ĐỔI MẬT KHẨU (KHI USER ĐÃ ĐĂNG NHẬP)
+ */
+export const updatePassword = async (req, res) => {
+    try {
+        // 1. Lấy ID user từ req.user (do middleware protect cung cấp)
+        const userId = req.user.id;
+
+        // 2. Lấy mật khẩu cũ và mới từ body
+        const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+
+        if (!currentPassword || !newPassword || !newPasswordConfirm) {
+            return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin.' });
+        }
+
+        // 3. Tìm user và lấy cả trường password đã bị ẩn
+        const user = await User.findById(userId).select('+password');
+
+        // 4. Kiểm tra mật khẩu hiện tại có đúng không
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Mật khẩu hiện tại không đúng.' });
+        }
+
+        // 5. Kiểm tra mật khẩu mới và xác nhận có khớp không
+        if (newPassword !== newPasswordConfirm) {
+            return res.status(400).json({ message: 'Mật khẩu mới và xác nhận không khớp.' });
+        }
+
+        // 6. Cập nhật mật khẩu mới
+        user.password = newPassword;
+        await user.save(); // pre-save hook sẽ tự động hash mật khẩu mới
+
+        // 7. Tạo token mới và gửi lại cho user (để user vẫn đăng nhập)
+        const token = signToken(user._id);
+
+        res.status(200).json({
+            status: 'success',
+            token,
+            message: 'Cập nhật mật khẩu thành công!'
+        });
+
+    } catch (error) {
+        console.error("LỖI CẬP NHẬT MẬT KHẨU:", error);
+        res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau.' });
+    }
+};

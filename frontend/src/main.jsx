@@ -5,7 +5,7 @@ import './index.css';
 import QuizletHomePage from './page/HomePage'; 
 import LoginPage from './page/LoginPage';
 import RegisterPage from './page/RegisterPage';
-import Profile from "./Profile";
+// import Profile from "./Profile";
 import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import ResetPasswordPage from "./page/ResetPasswordPage";
 import FlashCardPage from "./page/FlashCardPage";
@@ -15,6 +15,9 @@ import CreateFlashcardPage from "./page/CreateFlashcardPage";
 import DictionaryPage from './page/DictionaryPage';
 import StudyReminderPage from './page/StudyReminderPage';
 import TopicDetailPage from './page/TopicDetailPage'; // Import the new page
+import ProfilePage from './page/ProfilePage';
+import StatisticsPage from './page/StatisticsPage';
+import NotificationsPage from './page/NotificationsPage';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // 3. Render ứng dụng
@@ -30,7 +33,9 @@ root.render(
         {}
         <Route path="/login" element={<LoginPage />} />
         {}
-        <Route path="/sss" element={<Profile />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/statistics" element={<StatisticsPage />} />
+        <Route path="/notifications" an element={<NotificationsPage />} />
         {}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {}
@@ -49,8 +54,7 @@ root.render(
         <Route path="/dictionary" element={<DictionaryPage />} />
         {}
         <Route path="/studyreminder" element={<StudyReminderPage/>}/>
-        {}
-        <Route path="/profile" element={<Profile/>}/>
+
       </Routes>
     </Router>
   </React.StrictMode>

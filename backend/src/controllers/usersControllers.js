@@ -94,3 +94,47 @@ export const deleteUser=async(req,res) =>{
         res.status(500).json({message:"Lỗi máy chủ khi xóa User."});
     }
 };
+
+// Lấy thông tin của user đang đăng nhập
+export const getMe = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng." });
+        }
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user
+            }
+        });
+    } catch (error) {
+        console.error("Lỗi khi lấy thông tin cá nhân:", error);
+        res.status(500).json({ message: "Lỗi máy chủ." });
+    }
+};
+
+// User tự cập nhật thông tin cá nhân (displayName, profilePicture)
+export const updateMe = async (req, res, next) => {
+    try {
+        // Chỉ cho phép cập nhật một số trường nhất định
+        const body = {};
+        if (req.body.displayName) body.displayName = req.body.displayName;
+        if (req.body.profilePicture) body.profilePicture = req.body.profilePicture;
+
+        const updatedUser = await User.findByIdAndUpdate(req.user.id, body, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user: updatedUser
+            }
+        });
+    } catch (error) {
+        console.error("Lỗi khi cập nhật thông tin cá nhân:", error);
+        res.status(500).json({ message: "Lỗi máy chủ." });
+    }
+};

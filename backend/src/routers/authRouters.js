@@ -1,20 +1,26 @@
 import express from 'express';
-import { register, login,
-     forgotPassword,resetPassword } from '../controllers/authControllers.js';
+import { 
+    register, 
+    login,
+    forgotPassword,
+    resetPassword,
+    updatePassword // 1. Import hàm mới
+} from '../controllers/authControllers.js';
+import { protect } from '../middlewares/authMiddleware.js'; // 2. Import middleware
 
 const router = express.Router();
 
-// Endpoint (địa chỉ) cho chức năng Đăng ký
+// --- Các Route không cần đăng nhập ---
 router.post('/register', register);
-
-// Endpoint (địa chỉ) cho chức năng Đăng nhập
 router.post('/login', login);
-
-// API để yêu cầu link reset (gửi email)
 router.post('/forgot-password', forgotPassword);
-
-// API để đặt lại mật khẩu (khi user click link)
-// :token là một tham số động, chứa token từ email
 router.patch('/reset-password/:token', resetPassword);
+
+// --- Các Route yêu cầu phải đăng nhập ---
+
+// 3. Tạo route mới và dùng 'protect' middleware
+// API để user tự đổi mật khẩu (khi đã đăng nhập)
+router.patch('/update-my-password', protect, updatePassword);
+
 
 export default router;
