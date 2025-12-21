@@ -25,6 +25,8 @@ const StatisticsPage = () => {
             }
             
             try {
+                setLoading(true);
+                setError(null); // Reset lỗi trước khi gọi API mới
                 const [overall, daily, progress] = await Promise.all([
                     statisticsApi.getOverallStats(),
                     statisticsApi.getDailyStats(),
@@ -33,11 +35,11 @@ const StatisticsPage = () => {
                 setOverallStats(overall);
                 setDailyStats(daily);
                 setFlashcardProgress(progress);
-                setLoading(false);
             } catch (err) {
                 console.error("Lỗi khi tải thống kê:", err);
                 setError("Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.");
-                setLoading(false);
+            } finally {
+                setLoading(false); // Luôn tắt loading dù thành công hay thất bại
             }
         };
 
@@ -60,9 +62,10 @@ const StatisticsPage = () => {
                     <div className="container mx-auto p-4 md:p-6">
                         <h1 className="text-3xl font-bold text-gray-900 mb-6">Thống kê học tập của bạn</h1>
                         
-                        <OverallStatsCard stats={overallStats} />
-                        <DailyProgressChart dailyStats={dailyStats} />
-                        <FlashcardProgressList progressData={flashcardProgress} />
+                        {/* Thêm fallback || {} hoặc || [] để tránh lỗi crash nếu API trả về null */}
+                        <OverallStatsCard stats={overallStats || {}} />
+                        <DailyProgressChart dailyStats={dailyStats || []} />
+                        <FlashcardProgressList progressData={flashcardProgress || []} />
                         
                         {/* You could add a StudySessionsSummary component here if desired */}
                     </div>

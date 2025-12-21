@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, ArrowRight, Shuffle, CheckCircle, XCircle, RotateCw } from 'lucide-react';
 import { getFlashcardsByTopicApi } from '../../topic-detail/api/topicDetailApi';
-import { saveStudySession } from '../../study-session/api/studySessionApi'; // Import the new API function
+import studySessionApi from '../../study-session/api/studySessionApi';
 
 const StudyFlashcardsPage = ({ topicId }) => {
   const [cards, setCards] = useState([]);
@@ -13,6 +13,7 @@ const StudyFlashcardsPage = ({ topicId }) => {
   const [masteredCards, setMasteredCards] = useState([]);
   const [difficultCards, setDifficultCards] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const sessionStartTime = useRef(new Date());
 
   const currentCard = cards[currentIndex];
   const progress = cards.length > 0 ? ((currentIndex + 1) / cards.length) * 100 : 0;
@@ -29,6 +30,7 @@ const StudyFlashcardsPage = ({ topicId }) => {
         setError(null);
         const data = await getFlashcardsByTopicApi(topicId);
         setCards(data.flashcards);
+        sessionStartTime.current = new Date(); // Bắt đầu tính giờ khi tải xong thẻ
         setLoading(false);
       } catch (err) {
         console.error("Error fetching flashcards:", err);
@@ -44,11 +46,12 @@ const StudyFlashcardsPage = ({ topicId }) => {
     if (showResults) {
       const sendStudySession = async () => {
         try {
-          await saveStudySession({
+          await studySessionApi.createSummaryStudySession({
             topic: topicId,
             masteredCards: masteredCards,
             difficultCards: difficultCards,
-            totalCards: cards.length,
+            totalCards: cards.length, // totalCards is already calculated as cards.length
+            // Các trường khác như duration, startTime, endTime, completionRate sẽ được tính toán ở backend
           });
           console.log("Study session saved successfully!");
         } catch (err) {
@@ -105,6 +108,7 @@ const StudyFlashcardsPage = ({ topicId }) => {
     setMasteredCards([]);
     setDifficultCards([]);
     setShowResults(false);
+    sessionStartTime.current = new Date(); // Reset giờ khi xáo trộn
   };
 
   const handleRestart = () => {
@@ -113,6 +117,7 @@ const StudyFlashcardsPage = ({ topicId }) => {
     setMasteredCards([]);
     setDifficultCards([]);
     setShowResults(false);
+    sessionStartTime.current = new Date(); // Reset giờ khi học lại
   };
 
   if (loading) {

@@ -18,6 +18,8 @@ import ProfilePage from './page/ProfilePage';
 import StatisticsPage from './page/StatisticsPage';
 import NotificationsPage from './page/NotificationsPage';
 import { AuthProvider } from './contexts/AuthContext'; // Import AuthProvider
+import ClassesPage from './page/ClassesPage';
+import LibraryPage from './page/LibraryPage';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -41,6 +43,8 @@ root.render(
           <Route path="/create-deck" element={<CreateFlashcardPage />} />
           <Route path="/dictionary" element={<DictionaryPage />} />
           <Route path="/studyreminder" element={<StudyReminderPage/>}/>
+          <Route path="/classes" element={<ClassesPage />} />
+          <Route path="/library" element={<LibraryPage />} />
         </Routes>
       </Router>
     </AuthProvider>

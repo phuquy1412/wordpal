@@ -1,13 +1,27 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5001/api/study-sessions"; // Assuming this will be the base URL for study sessions
+const API_URL = "http://localhost:5001/api/study-sessions";
 
-export const saveStudySession = async (sessionData) => {
-  try {
-    const res = await axios.post(API_URL, sessionData);
+const studySessionApi = {
+  startStudySession: async (topicId) => {
+    const res = await axios.post(`${API_URL}/start`, { topicId });
     return res.data;
-  } catch (error) {
-    console.error("Error saving study session:", error);
-    throw error.response?.data || { message: "Failed to save study session" };
-  }
+  },
+
+  processCardReview: async (sessionId, flashcardId, quality, timeSpent) => {
+    const res = await axios.post(`${API_URL}/${sessionId}/review`, { flashcardId, quality, timeSpent });
+    return res.data;
+  },
+
+  endStudySession: async (sessionId) => {
+    const res = await axios.post(`${API_URL}/${sessionId}/end`);
+    return res.data;
+  },
+
+  createSummaryStudySession: async (sessionData) => {
+    const res = await axios.post(`${API_URL}/summary`, sessionData);
+    return res.data;
+  },
 };
+
+export default studySessionApi;
