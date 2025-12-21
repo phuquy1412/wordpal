@@ -3,7 +3,8 @@ import { protect } from '../middlewares/authMiddleware.js';
 import {
     startStudySession,
     processCardReview,
-    endStudySession
+    endStudySession,
+    createSummaryStudySession
 } from '../controllers/studySessionControllers.js';
 
 const router = express.Router();
@@ -25,5 +26,10 @@ router.post('/:sessionId/review', processCardReview);
 // @desc    End a study session and update user statistics
 // @access  Private
 router.post('/:sessionId/end', endStudySession);
+
+// @route   POST /api/study-sessions/summary
+// @desc    Create a summary study session from frontend data
+// @access  Private
+router.post('/summary', createSummaryStudySession);
 
 export default router;

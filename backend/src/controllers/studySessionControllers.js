@@ -153,6 +153,155 @@ export const processCardReview = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Create a summary study session from frontend data
+ * @route   POST /api/study-sessions/summary
+ * @access  Private
+ * @body    { topic: topicId, masteredCards: [flashcardIds], difficultCards: [flashcardIds], totalCards: number }
+ */
+export const createSummaryStudySession = async (req, res) => {
+    const { topic: topicId, masteredCards, difficultCards, totalCards } = req.body;
+    const userId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(topicId)) {
+        return res.status(400).json({ message: 'ID chủ đề không hợp lệ.' });
+    }
+    if (!Array.isArray(masteredCards) || !Array.isArray(difficultCards)) {
+        return res.status(400).json({ message: 'masteredCards và difficultCards phải là mảng.' });
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const now = new Date();
+        const duration = totalCards > 0 ? (masteredCards.length + difficultCards.length) * 10 : 0; // Estimate 10s per card
+
+        const newStudySession = new StudySession({
+            user: userId,
+            topic: topicId,
+            startTime: now,
+            endTime: now,
+            duration: duration,
+            cardsStudied: totalCards,
+            cardsCorrect: masteredCards.length,
+            cardsIncorrect: difficultCards.length,
+            completionRate: totalCards > 0 ? (masteredCards.length / totalCards) * 100 : 0,
+            reviews: [],
+        });
+
+        // Populate reviews for the new StudySession and update UserProgress
+        for (const flashcardId of masteredCards) {
+            newStudySession.reviews.push({ flashcard: flashcardId, quality: 5, timestamp: now });
+            let userProgress = await UserProgress.findOne({ user: userId, flashcard: flashcardId }).session(session);
+            if (!userProgress) {
+                userProgress = new UserProgress({ user: userId, flashcard: flashcardId, topic: topicId });
+            }
+            userProgress.correctCount += 1;
+            userProgress.totalReviews += 1;
+            const { easeFactor, interval, repetitions, nextReviewDate } = calculateSRS(
+                userProgress.easeFactor, userProgress.interval, userProgress.repetitions, 5
+            );
+            Object.assign(userProgress, { easeFactor, interval, repetitions, nextReviewDate, lastReviewDate: now, status: repetitions === 0 ? 'learning' : (interval > 30 ? 'mastered' : 'reviewing') });
+            await userProgress.save({ session });
+        }
+
+        for (const flashcardId of difficultCards) {
+            newStudySession.reviews.push({ flashcard: flashcardId, quality: 1, timestamp: now });
+            let userProgress = await UserProgress.findOne({ user: userId, flashcard: flashcardId }).session(session);
+            if (!userProgress) {
+                userProgress = new UserProgress({ user: userId, flashcard: flashcardId, topic: topicId });
+            }
+            userProgress.incorrectCount += 1;
+            userProgress.totalReviews += 1;
+            const { easeFactor, interval, repetitions, nextReviewDate } = calculateSRS(
+                userProgress.easeFactor, userProgress.interval, userProgress.repetitions, 1
+            );
+            Object.assign(userProgress, { easeFactor, interval, repetitions, nextReviewDate, lastReviewDate: now, status: repetitions === 0 ? 'learning' : (interval > 30 ? 'mastered' : 'reviewing') });
+            await userProgress.save({ session });
+        }
+
+        await newStudySession.save({ session });
+
+        // Update UserStatistics (similar to endStudySession)
+        let userStats = await UserStatistics.findOne({ user: userId }).session(session);
+        if (!userStats) {
+            userStats = new UserStatistics({ user: userId });
+        }
+
+        userStats.totalStudySessions += 1;
+        userStats.totalStudyTime += newStudySession.duration;
+        userStats.totalCardsReviewed += newStudySession.cardsStudied;
+        userStats.totalCorrectAnswers += newStudySession.cardsCorrect;
+        
+        if (userStats.totalCardsReviewed > 0) {
+            userStats.averageAccuracy = (userStats.totalCorrectAnswers / userStats.totalCardsReviewed) * 100;
+        } else {
+            userStats.averageAccuracy = 0;
+        }
+
+        // Streak logic
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        const lastStudy = userStats.lastStudyDate ? new Date(userStats.lastStudyDate) : null;
+        if (lastStudy) lastStudy.setHours(0, 0, 0, 0);
+
+        if (lastStudy && lastStudy.getTime() === today.getTime()) {
+            // Already studied today, no change to streak
+        } else if (lastStudy && (today.getTime() - lastStudy.getTime() === 24 * 60 * 60 * 1000)) {
+            userStats.currentStreak += 1;
+        } else {
+            userStats.currentStreak = 1;
+        }
+        userStats.longestStreak = Math.max(userStats.longestStreak, userStats.currentStreak);
+        userStats.lastStudyDate = new Date(); 
+
+        // Update dailyStats
+        const todayStr = today.toISOString().split('T')[0];
+        let dailyStat = userStats.dailyStats.find(d => new Date(d.date).toISOString().split('T')[0] === todayStr);
+
+        if (dailyStat) {
+            dailyStat.cardsStudied += newStudySession.cardsStudied;
+            dailyStat.studyTime += newStudySession.duration;
+            // Update accuracy based on newly added correct answers
+            const totalDailyCorrect = (dailyStat.cardsStudied - newStudySession.cardsStudied) * (dailyStat.accuracy / 100) + newStudySession.cardsCorrect;
+            dailyStat.accuracy = (totalDailyCorrect / dailyStat.cardsStudied) * 100;
+        } else {
+            userStats.dailyStats.push({
+                date: today,
+                cardsStudied: newStudySession.cardsStudied,
+                studyTime: newStudySession.duration,
+                accuracy: newStudySession.cardsStudied > 0 ? (newStudySession.cardsCorrect / newStudySession.cardsStudied) * 100 : 0
+            });
+            if (userStats.dailyStats.length > 30) {
+                userStats.dailyStats.sort((a, b) => new Date(a.date) - new Date(b.date));
+                userStats.dailyStats = userStats.dailyStats.slice(userStats.dailyStats.length - 30);
+            }
+        }
+        
+        const userTopics = await StudySession.distinct('topic', { user: userId }).session(session);
+        userStats.totalTopics = userTopics.length;
+        
+        const userFlashcards = await UserProgress.distinct('flashcard', { user: userId }).session(session);
+        userStats.totalFlashcards = userFlashcards.length;
+
+        await userStats.save({ session });
+
+        await session.commitTransaction();
+        res.status(201).json({ 
+            message: 'Phiên học tóm tắt đã được lưu và thống kê đã được cập nhật.', 
+            studySession: newStudySession, 
+            userStats 
+        });
+
+    } catch (error) {
+        await session.abortTransaction();
+        console.error(`Lỗi khi tạo phiên học tóm tắt: ${error.message}`);
+        res.status(500).json({ message: 'Lỗi server khi tạo phiên học tóm tắt.' });
+    } finally {
+        session.endSession();
+    }
+};
 
 /**
  * @desc    End a study session and update user statistics
@@ -183,7 +332,7 @@ export const endStudySession = async (req, res) => {
         
         // Ensure completionRate is calculated correctly (e.g., based on number of cards reviewed vs available cards)
         // For simplicity, let's say it's 1 if any cards were studied
-        studySession.completionRate = studySession.cardsStudied > 0 ? 1 : 0; 
+        studySession.completionRate = studySession.cardsStudied > 0 ? (studySession.cardsCorrect / studySession.cardsStudied) * 100 : 0; 
         
         await studySession.save({ session });
 
@@ -232,21 +381,15 @@ export const endStudySession = async (req, res) => {
         if (dailyStat) {
             dailyStat.cardsStudied += studySession.cardsStudied;
             dailyStat.studyTime += studySession.duration;
-            // Re-calculate accuracy for the day
-            const totalDailyCards = dailyStat.cardsStudied; // This is actually total studied for the day
-            const totalDailyCorrect = dailyStat.studyTime; // Placeholder, need actual daily correct count
-            // This accuracy calculation needs more thought or a different way to track daily correct answers
-            // For now, let's keep it simple: if daily stat existed, update
-            // Otherwise, we'll need to aggregate more carefully.
-            // For simplicity in this example, just update the existing one.
-            // A more robust solution would aggregate from UserProgress for the day.
-            dailyStat.accuracy = (userStats.totalCorrectAnswers / userStats.totalCardsReviewed) * 100; // Use overall accuracy for now
+            // Update accuracy based on newly added correct answers
+            const totalDailyCorrect = (dailyStat.cardsStudied - studySession.cardsStudied) * (dailyStat.accuracy / 100) + studySession.cardsCorrect;
+            dailyStat.accuracy = (totalDailyCorrect / dailyStat.cardsStudied) * 100;
         } else {
             userStats.dailyStats.push({
                 date: today,
                 cardsStudied: studySession.cardsStudied,
                 studyTime: studySession.duration,
-                accuracy: (studySession.cardsCorrect / studySession.cardsStudied) * 100 // Accuracy for this specific session
+                accuracy: studySession.cardsStudied > 0 ? (studySession.cardsCorrect / studySession.cardsStudied) * 100 : 0 // Accuracy for this specific session
             });
             // Keep dailyStats array to max 30 entries (or similar)
             if (userStats.dailyStats.length > 30) {
@@ -279,4 +422,3 @@ export const endStudySession = async (req, res) => {
         session.endSession();
     }
 };
-

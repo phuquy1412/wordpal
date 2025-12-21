@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Shuffle, CheckCircle, XCircle, RotateCw } from 'lucide-react';
 import { getFlashcardsByTopicApi } from '../../topic-detail/api/topicDetailApi';
+import { saveStudySession } from '../../study-session/api/studySessionApi'; // Import the new API function
 
 const StudyFlashcardsPage = ({ topicId }) => {
   const [cards, setCards] = useState([]);
@@ -38,6 +39,26 @@ const StudyFlashcardsPage = ({ topicId }) => {
 
     fetchFlashcards();
   }, [topicId]);
+
+  useEffect(() => {
+    if (showResults) {
+      const sendStudySession = async () => {
+        try {
+          await saveStudySession({
+            topic: topicId,
+            masteredCards: masteredCards,
+            difficultCards: difficultCards,
+            totalCards: cards.length,
+          });
+          console.log("Study session saved successfully!");
+        } catch (err) {
+          console.error("Failed to save study session:", err);
+          // TODO: Handle error, e.g., show a toast notification to the user
+        }
+      };
+      sendStudySession();
+    }
+  }, [showResults, topicId, masteredCards, difficultCards, cards.length]);
 
   const handleNext = () => {
     if (currentIndex < cards.length - 1) {
