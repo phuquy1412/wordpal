@@ -10,7 +10,7 @@ import mongoose from 'mongoose';
  */
 export const createFlashcard = async (req, res) => {
     const { id: topicId } = req.params;
-    const { front, back, pronunciation, example } = req.body;
+    const { front, back, pronunciation, example, difficulty } = req.body;
 
     if (!front || !back) {
         return res.status(400).json({ message: 'Mặt trước và mặt sau của thẻ không được để trống' });
@@ -37,7 +37,8 @@ export const createFlashcard = async (req, res) => {
             front,
             back,
             pronunciation,
-            example
+            example,
+            difficulty: difficulty || undefined // Only set if provided, otherwise default will apply
         });
 
         // Sử dụng transaction để đảm bảo cả hai thao tác đều thành công
