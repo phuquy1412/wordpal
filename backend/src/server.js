@@ -5,6 +5,8 @@ import wordRouter from './routers/wordRouters.js'
 import topicRouter from './routers/topic/topicRouters.js';
 import flashcardRouter from './routers/flashcard/flashcardRouters.js';
 import studyScheduleRouter from './routers/studyScheduleRouters.js';
+import statisticsRouter from './routers/statisticsRouters.js'; // New import
+import studySessionRouter from './routers/studySessionRouters.js'; // New import
 import { startReminderScheduler } from './services/reminderScheduler.js';
 import { connectDB } from './config/db.js';
 import dotenv from 'dotenv';
@@ -28,6 +30,8 @@ app.use('/api/words', wordRouter);
 app.use('/api/topics', topicRouter);
 app.use('/api/flashcards', flashcardRouter);
 app.use('/api/schedules', studyScheduleRouter);
+app.use('/api/statistics', statisticsRouter); // New use
+app.use('/api/study-sessions', studySessionRouter); // New use
 
 
 connectDB().then(() =>{
