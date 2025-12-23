@@ -1,0 +1,151 @@
+Phân Tích Chi Tiết Luồng Quản Lý Người Dùng - WordPal
+
+Tài liệu này mô tả chi tiết luồng hoạt động (từ Frontend đến Backend) cho các chức năng quản lý người dùng.
+
+Bối cảnh:
+- Frontend (React): Chạy ở http://localhost:5173
+- Backend (Node.js/Express): Chạy ở http://localhost:5001
+
+---
+### LUỒNG 1: ĐĂNG NHẬP (LOGIN)
+---
+
+**Mục tiêu:** Người dùng cung cấp email và mật khẩu để xác thực và nhận được quyền truy cập vào ứng dụng.
+
+**[Bước 1] FRONTEND: Tương tác trên giao diện**
+- **Vị trí:** Người dùng mở trang Đăng nhập (`http://localhost:5173/login`).
+- **File chịu trách nhiệm:** `frontend/src/page/LoginPage.jsx` sẽ render component form đăng nhập.
+- **Component chính:** `frontend/src/features/auth/components/LoginForm.jsx`.
+- **Hành động của người dùng:**
+    1. Nhập email vào ô input (ví dụ: `name="email"`).
+    2. Nhập mật khẩu vào ô input (ví dụ: `name="password"`).
+    3. Nhấn nút "Login". Hành động này kích hoạt sự kiện `onSubmit` của thẻ `<form>`.
+
+**[Bước 2] FRONTEND: Chuẩn bị và gửi API Request**
+- **File:** `frontend/src/features/auth/components/LoginForm.jsx`.
+- **Logic:**
+    1. Hàm xử lý `onSubmit` được gọi.
+    2. Nó sử dụng `useState` để lấy dữ liệu `email` và `password` mà người dùng đã nhập.
+    3. Dữ liệu được đóng gói thành một object, ví dụ: `{ email: 'user@test.com', password: '123' }`.
+    4. Hàm này gọi một service function, thường là từ `frontend/src/features/auth/api/authApi.js`.
+
+- **File:** `frontend/src/features/auth/api/authApi.js`.
+- **Logic (ví dụ hàm `login`):**
+    1. Hàm này nhận object chứa `email` và `password`.
+    2. Nó sử dụng `axios.post` hoặc `fetch` để tạo một HTTP request.
+    3. **Request Details:**
+        - **Method:** `POST`
+        - **URL:** `http://localhost:5001/api/auth/login`
+        - **Body (Payload):** `{ "email": "user@test.com", "password": "123" }` (dưới dạng JSON).
+
+**[Bước 3] BACKEND: Nhận và xử lý yêu cầu**
+- **File:** `backend/src/routers/authRouters.js`.
+- **Logic:**
+    1. Hệ thống routing của Express khớp `POST /api/auth/login` với một route đã định nghĩa.
+    2. Route này chỉ định rằng hàm `loginUser` từ controller sẽ xử lý request này.
+
+- **File:** `backend/src/controllers/authControllers.js`.
+- **Logic (hàm `loginUser`):**
+    1. **Trích xuất dữ liệu:** Lấy `email` và `password` từ `req.body`.
+    2. **Truy vấn DB:** Sử dụng `User Model` (từ `backend/src/model/User.js`) để tìm người dùng trong cơ sở dữ liệu MongoDB.
+       - Lệnh Mongoose: `const user = await User.findOne({ email });`
+    3. **Xác thực người dùng:**
+       - Nếu `user` không tồn tại, trả về lỗi 400 (Bad Request) với thông báo "Invalid credentials".
+    4. **Xác thực mật khẩu:**
+       - Nếu người dùng tồn tại, so sánh mật khẩu người dùng gửi lên với mật khẩu đã được hash trong DB.
+       - Lệnh so sánh: `const isMatch = await bcrypt.compare(password, user.password);`
+       - Nếu `isMatch` là `false`, trả về lỗi 400 "Invalid credentials".
+    5. **Tạo Token:**
+       - Nếu mật khẩu khớp, tạo một JSON Web Token (JWT).
+       - Token này chứa payload là ID của người dùng: `{ id: user._id }`.
+       - Token được ký bằng một chuỗi bí mật (`process.env.JWT_SECRET`).
+    6. **Gửi Phản hồi:** Trả về response `200 OK` cho Frontend.
+       - **Response Body:** `{ "token": "...", "user": { "id": "...", "name": "...", "email": "..." } }`.
+
+**[Bước 4] FRONTEND: Xử lý phản hồi và hoàn tất**
+- **File:** `frontend/src/features/auth/api/authApi.js` (trong block `.then()` hoặc `await`).
+- **Logic:**
+    1. Nhận được dữ liệu `token` và `user` từ backend.
+    2. Lưu `token` vào `localStorage` của trình duyệt: `localStorage.setItem('jwt', response.data.token);`.
+- **File:** `frontend/src/contexts/AuthContext.jsx`.
+- **Logic:**
+    1. Cập nhật state toàn cục của ứng dụng, cho biết người dùng đã đăng nhập và lưu thông tin người dùng.
+    2. React sẽ tự động render lại các component cần thiết (ví dụ: hiển thị tên người dùng thay vì nút Login).
+    3. Điều hướng người dùng (sử dụng `react-router-dom`) đến trang dashboard hoặc trang chủ.
+
+---
+### LUỒNG 2: QUÊN MẬT KHẨU (FORGOT PASSWORD)
+---
+
+**Mục tiêu:** Người dùng cung cấp email để nhận một link cho phép họ đặt lại mật khẩu.
+
+**[Bước 1] FRONTEND: Gửi yêu cầu Reset**
+- **Vị trí:** Trang Quên mật khẩu (`http://localhost:5173/forgot-password`).
+- **Component:** `frontend/src/features/auth/components/ForgotPasswordForm.jsx`.
+- **Hành động:**
+    1. Người dùng nhập email và nhấn "Send reset link".
+    2. Hàm `onSubmit` gọi service API `forgotPassword` từ `frontend/src/features/auth/api/authApi.js`.
+    3. **Request Details:**
+        - **Method:** `POST`
+        - **URL:** `http://localhost:5001/api/auth/forgot-password`
+        - **Body:** `{ "email": "user@test.com" }`
+
+**[Bước 2] BACKEND: Tạo Token và Gửi Email**
+- **File:** `backend/src/routers/authRouters.js` -> `backend/src/controllers/authControllers.js` (hàm `forgotPassword`).
+- **Logic:**
+    1. **Tìm người dùng:** `const user = await User.findOne({ email: req.body.email });`
+    2. **Kiểm tra:** Nếu không có `user`, vẫn trả về `200 OK` để bảo mật (tránh việc hacker có thể kiểm tra email nào đã được đăng ký).
+    3. **Tạo Reset Token:**
+       - Tạo một chuỗi ngẫu nhiên, an toàn bằng `crypto.randomBytes(32).toString('hex')`.
+    4. **Lưu Token vào DB:**
+       - **Băm token:** `const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');`
+       - Lưu `hashedToken` vào trường `passwordResetToken` của document người dùng.
+       - Đặt thời gian hết hạn (ví dụ: 10 phút sau): `user.passwordResetExpires = Date.now() + 10 * 60 * 1000;`
+       - Lưu lại document: `await user.save();`
+    5. **Gửi Email:**
+       - Tạo URL reset, chứa token **chưa được băm**: `const resetURL = 
+http://localhost:5173/reset-password/${rawToken}
+`;
+       - Gọi một service gửi mail (`backend/src/utils/email.js`) để gửi email chứa `resetURL` đến địa chỉ của người dùng.
+    6. **Phản hồi:** Gửi response `200 OK` về cho Frontend.
+
+**[Bước 3] FRONTEND: Hoàn tất**
+- Hiển thị một thông báo cho người dùng, ví dụ: "Nếu email của bạn có trong hệ thống, bạn sẽ nhận được một email hướng dẫn đặt lại mật khẩu."
+
+---
+### LUỒNG 3: ĐẶT LẠI MẬT KHẨU (RESET PASSWORD)
+---
+
+**Mục tiêu:** Người dùng sử dụng link từ email để đặt mật khẩu mới.
+
+**[Bước 1] FRONTEND: Nhập mật khẩu mới**
+- **Vị trí:** Người dùng nhấn vào link trong email, mở ra trang `http://localhost:5173/reset-password/<some-token>`.
+- **Component:** `frontend/src/features/auth/components/ResetPasswordForm.jsx`.
+- **Logic:**
+    1. Component đọc `token` từ tham số URL.
+    2. Người dùng nhập mật khẩu mới và xác nhận mật khẩu.
+    3. Khi nhấn "Reset Password", form `onSubmit` được gọi.
+    4. **Request Details:**
+        - **Method:** `PUT`
+        - **URL:** `http://localhost:5001/api/auth/reset-password/<some-token>` (token được lấy từ URL).
+        - **Body:** `{ "password": "newStrongPassword123" }`
+
+**[Bước 2] BACKEND: Xác thực Token và Cập nhật Mật khẩu**
+- **File:** `backend/src/routers/authRouters.js` -> `backend/src/controllers/authControllers.js` (hàm `resetPassword`).
+- **Logic:**
+    1. **Lấy token thô** từ `req.params.token`.
+    2. **Băm token thô** này để so sánh với token trong DB: `const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');`
+    3. **Tìm người dùng:** Tìm một user trong DB thỏa mãn cả 2 điều kiện:
+       - `passwordResetToken` phải khớp với `hashedToken`.
+       - `passwordResetExpires` phải lớn hơn thời gian hiện tại (`Date.now()`).
+       - Lệnh Mongoose: `const user = await User.findOne({ passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now() } });`
+    4. **Xác thực:** Nếu không tìm thấy `user`, trả về lỗi 400 "Token is invalid or has expired".
+    5. **Cập nhật Mật khẩu:**
+       - Nếu tìm thấy, gán mật khẩu mới từ `req.body` vào `user.password`.
+       - Xóa token và ngày hết hạn: `user.passwordResetToken = undefined;`, `user.passwordResetExpires = undefined;`.
+       - Lưu người dùng: `await user.save();` (Lúc này, `pre-save hook` trong `User Model` sẽ tự động hash mật khẩu mới).
+    6. **Tạo token đăng nhập mới** và gửi về cho người dùng để họ có thể đăng nhập ngay lập tức.
+    7. **Phản hồi:** Gửi response `200 OK` với token đăng nhập mới.
+
+**[Bước 3] FRONTEND: Hoàn tất**
+- Thông báo thành công và tự động đăng nhập cho người dùng, sau đó điều hướng đến trang chủ.
