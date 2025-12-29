@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    profilePicture: { // URL ảnh đại diện
+    profilePicture: { 
         type: String,
         default: 'URL_TO_DEFAULT_AVATAR'
     },
@@ -59,7 +59,7 @@ const userSchema = new mongoose.Schema({
         enum: ['student', 'teacher'],
         default: 'student'
     },
-    isVerified: { // Đã xác minh email/tài khoản chưa
+    isVerified: { 
         type: Boolean,
         default: false
     },

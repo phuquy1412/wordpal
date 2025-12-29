@@ -133,7 +133,7 @@ export default function Header() {
 
                         <button
                           onClick={() => {
-                            navigate('/my-sets');
+                            navigate('/decks');
                             setShowDropdown(false);
                           }}
                           className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -178,7 +178,7 @@ export default function Header() {
                   Đăng nhập
                 </button>
                 <button 
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate('/register')}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-md hover:shadow-lg"
                 >
                   Đăng ký

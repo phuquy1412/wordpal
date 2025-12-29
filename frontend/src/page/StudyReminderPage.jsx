@@ -108,20 +108,9 @@ const StudyReminderPage = () => {
       <Header />
       
       <main className="flex-grow">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Bell className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Nhắc nhở học tập</h1>
-                  <p className="text-sm text-gray-600">Đặt lịch ôn bài đều đặn mỗi ngày</p>
-                </div>
-              </div>
-
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-end mb-6">
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
@@ -129,12 +118,7 @@ const StudyReminderPage = () => {
                 <Plus className="w-5 h-5" />
                 <span className="hidden md:inline">Tạo nhắc nhở</span>
               </button>
-            </div>
           </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Reminder List */}
             <div className="lg:col-span-2 space-y-6">

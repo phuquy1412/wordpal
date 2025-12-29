@@ -208,7 +208,6 @@ export const getAllQuizResults = async (req, res) => {
         if (topicId) {
             query.topic = topicId;
         }
-
         // Chỉ admin hoặc người dùng tự xem lịch sử của mình
         if (req.user.role === 'admin' && userId) {
             query.user = userId;
